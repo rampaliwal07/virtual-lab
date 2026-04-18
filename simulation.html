@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Simulation - Compute Rank</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link rel="stylesheet" href="css/style.css"></head>
+<body>
+    <header class="glass-header"><div class="container header-flex"><div class="logo-area"><div class="college-brand"><img src="https://raw.githubusercontent.com/dineshkute90/virtual_lab_LAUC/main/pccoe.png" class="logo-img" onerror="this.src='https://via.placeholder.com/52'"><div class="college-text"><div class="main">APPLIED SCIENCES & HUMANITIES</div><div class="sub">PCCoE</div></div></div><div class="vlab-brand"><i class="fas fa-microchip"></i><h1>Virtual <span>Labs</span></h1></div></div><div class="user-tag"><i class="fas fa-hand-pointer"></i><span>Interactive</span></div></div></header>
+    <nav class="nav-wrapper"><div class="container nav-links"><a href="index.html">Home</a><a href="aim.html">Aim</a><a href="theory.html">Theory</a><a href="pretest.html">Pretest</a><a href="simulation.html" class="active">Simulation</a><a href="posttest.html">Posttest</a><a href="references.html">References</a><a href="contributors.html">Contributors</a><a href="feedback.html">Feedback</a></div></nav>
+    <main class="container"><div class="main-card"><div class="page-header"><h2>🧪 Interactive Simulation: Matrix Rank</h2><p>Enter matrix values and click 'Compute Rank'</p></div><label>Matrix Size: </label><select id="matrix-size"><option value="2">2x2</option><option value="3" selected>3x3</option><option value="4">4x4</option></select><div id="matrix-grid" style="margin: 30px 0;"></div><button id="compute-rank" class="btn-submit"><i class="fas fa-chart-line"></i> Compute Rank</button><div class="rank-result" style="margin-top: 28px;">📊 Rank of Matrix : <span id="rank-value">0</span></div></div></main>
+    <footer class="footer"><p>Gaussian elimination algorithm • Real-time rank calculation</p></footer>
+    <script src="js/main.js"></script>
+    <script>window.initMatrixSim();</script>
+</body>
+</html>
