@@ -1,148 +1,103 @@
-// Shared helpers + Fourier simulation (supports custom expression & predefined)
+// Main JS for Fourier Virtual Lab (no graph – only equation problems)
 document.addEventListener('DOMContentLoaded', () => {
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.nav-links a').forEach(link => {
         if (link.getAttribute('href') === currentPage) link.classList.add('active');
     });
-    if (currentPage === 'simulation.html' && window.initFourierSim) window.initFourierSim();
+    if (currentPage === 'simulation.html' && window.initFourierProblemSolver) window.initFourierProblemSolver();
     if (currentPage === 'quiz.html' && window.initFourierQuiz) window.initFourierQuiz();
     if (currentPage === 'feedback.html' && window.initFeedback) window.initFeedback();
 });
 
-// ---------- FOURIER SERIES SIMULATION (with custom expression) ----------
-const predefinedWaveforms = {
-    square: (x) => (x > 0 ? 1 : -1),
-    sawtooth: (x) => x / Math.PI,
-    triangle: (x) => 1 - Math.abs(x / Math.PI)
-};
-
-// Compute predefined Fourier sum
-function predefinedSeries(wave, N, x) {
-    let sum = 0;
-    if (wave === 'square') {
-        for (let n = 1; n <= N; n += 2) {
-            sum += (4 / (n * Math.PI)) * Math.sin(n * x);
-        }
-    } else if (wave === 'sawtooth') {
-        for (let n = 1; n <= N; n++) {
-            sum += (2 * Math.pow(-1, n+1) / (n * Math.PI)) * Math.sin(n * x);
-        }
-    } else if (wave === 'triangle') {
-        for (let n = 1; n <= N; n++) {
-            const coeff = (8 / (Math.pow(Math.PI,2))) * (Math.sin(n*Math.PI/2)) / (n*n);
-            sum += coeff * Math.sin(n * x);
-        }
+// ---------- FOURIER SERIES PROBLEM SOLVER (No Graph) ----------
+const problemBank = [
+    {
+        functionDef: "f(x) = { 1, for 0 < x < π;  -1, for -π < x < 0 } (square wave, period 2π)",
+        correctAnswer: "∑_{n=1,3,5,…} (4/(nπ)) sin(nx)",
+        alternativeAnswers: ["(4/π) Σ sin(nx)/n", "4/π (sin x + sin3x/3 + sin5x/5+…)"],
+        hint: "Odd function, only sine terms, coefficients = 4/(nπ) for odd n."
+    },
+    {
+        functionDef: "f(x) = x, for -π < x < π, periodic with period 2π (sawtooth)",
+        correctAnswer: "∑_{n=1}^{∞} (2(-1)^{n+1}/n) sin(nx)",
+        alternativeAnswers: ["2(sin x - sin2x/2 + sin3x/3 - …)", "2∑ (-1)^{n+1} sin(nx)/n"],
+        hint: "Odd function, bₙ = 2(-1)^{n+1}/n."
+    },
+    {
+        functionDef: "f(x) = |x|, for -π < x < π (triangle wave, even function)",
+        correctAnswer: "π/2 - (4/π) ∑_{n odd} cos(nx)/n²",
+        alternativeAnswers: ["π/2 - (4/π)(cos x + cos3x/9 + cos5x/25+…)"],
+        hint: "Even function → cosine series. a₀ = π, aₙ = -4/(π n²) for odd n."
+    },
+    {
+        functionDef: "f(x) = 0 for -π < x < 0, and f(x)=1 for 0 < x < π (half‑rectified)",
+        correctAnswer: "1/2 + (2/π) ∑_{n odd} sin(nx)/n",
+        alternativeAnswers: ["0.5 + (2/π)(sin x + sin3x/3 + sin5x/5+…)"],
+        hint: "Average value = 1/2, sine series for odd n."
     }
-    return sum;
-}
+];
 
-// Evaluate custom Fourier series from user expression
-function evaluateCustomSeries(expr, nStart, nEnd, x) {
-    // Build a safe evaluator: replace ^ with **, allow sin, cos, exp, log, pow
-    let sanitized = expr.replace(/\^/g, '**');
-    // Validate allowed characters (basic math, n, x)
-    if (!/^[\d\s\+\-\*\/\(\)\*\*\,\.a-zA-Z_]+$/.test(sanitized.replace(/sin|cos|tan|exp|log|pow|abs/g, ''))) {
-        throw new Error('Invalid characters in expression');
-    }
-    let total = 0;
-    for (let n = nStart; n <= nEnd; n++) {
-        // Replace 'n' with current harmonic, but careful not to replace inside 'sin' etc.
-        // Use Function constructor with local variables n and x
-        const exprWithN = sanitized.replace(/n(?![a-z])/gi, n.toString()); // replace standalone n
-        try {
-            const fn = new Function('x', `return (${exprWithN})`);
-            total += fn(x);
-        } catch(e) {
-            throw new Error(`Evaluation error at n=${n}: ${e.message}`);
-        }
-    }
-    return total;
-}
+window.initFourierProblemSolver = () => {
+    const container = document.getElementById('problem-container');
+    if (!container) return;
 
-window.initFourierSim = () => {
-    if (typeof Chart === 'undefined') {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
-        script.onload = () => setup();
-        document.head.appendChild(script);
-    } else setup();
+    let currentProblem = null;
+    let currentIndex = 0;
 
-    function setup() {
-        const ctx = document.getElementById('fourierChart').getContext('2d');
-        let chart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ label: 'Fourier Approximation', data: [], borderColor: '#f97316', borderWidth: 2, fill: false, tension: 0.1 }] },
-            options: { responsive: true, maintainAspectRatio: true, scales: { x: { title: { display: true, text: 'x' } }, y: { title: { display: true, text: 'f(x)' } } } }
+    function loadProblem(index) {
+        currentProblem = problemBank[index % problemBank.length];
+        currentIndex = index;
+        container.innerHTML = `
+            <div class="problem-card">
+                <h3><i class="fas fa-question-circle"></i> Problem ${currentIndex+1}</h3>
+                <div class="function-def">
+                    ${currentProblem.functionDef}
+                </div>
+                <p><strong>📝 Enter the Fourier series expansion:</strong></p>
+                <textarea id="user-answer" rows="3" class="answer-input" placeholder="Example: (4/π) * (sin(x) + sin(3x)/3 + sin(5x)/5) or Σ notation"></textarea>
+                <div class="feedback-msg" id="feedback-msg">
+                    <i class="fas fa-lightbulb"></i> Hint: ${currentProblem.hint}
+                </div>
+                <button id="check-answer" class="btn-check"><i class="fas fa-check-circle"></i> Check Answer</button>
+                <button id="show-solution" class="btn-next" style="background:#475569;"><i class="fas fa-eye"></i> Show Solution</button>
+            </div>
+        `;
+
+        document.getElementById('check-answer').addEventListener('click', () => {
+            const userInput = document.getElementById('user-answer').value.trim().toLowerCase().replace(/\s/g, '');
+            const correct = currentProblem.correctAnswer.toLowerCase().replace(/\s/g, '');
+            const alternatives = currentProblem.alternativeAnswers.map(s => s.toLowerCase().replace(/\s/g, ''));
+            const isCorrect = (userInput === correct) || alternatives.includes(userInput) ||
+                              (userInput.includes('4/π') && currentProblem.correctAnswer.includes('4/(nπ)')) ||
+                              (userInput.includes('2(-1)^') && currentProblem.correctAnswer.includes('2(-1)^{n+1}'));
+            
+            const feedbackDiv = document.getElementById('feedback-msg');
+            if (isCorrect) {
+                feedbackDiv.innerHTML = `<i class="fas fa-check-circle" style="color:green"></i> ✅ Correct! Great job.`;
+                feedbackDiv.style.background = '#d1fae5';
+            } else {
+                feedbackDiv.innerHTML = `<i class="fas fa-times-circle" style="color:red"></i> ❌ Not quite. Hint: ${currentProblem.hint}<br><strong>Expected form:</strong> ${currentProblem.correctAnswer}`;
+                feedbackDiv.style.background = '#fee2e2';
+            }
         });
 
-        function update() {
-            const mode = document.querySelector('.mode-btn.active')?.dataset.mode || 'predefined';
-            let xMin, xMax, yVals = [], xVals = [];
-            const points = 400;
+        document.getElementById('show-solution').addEventListener('click', () => {
+            const feedbackDiv = document.getElementById('feedback-msg');
+            feedbackDiv.innerHTML = `<i class="fas fa-book-open"></i> <strong>Solution:</strong> ${currentProblem.correctAnswer}<br><em>${currentProblem.hint}</em>`;
+            feedbackDiv.style.background = '#eef2ff';
+        });
+    }
 
-            if (mode === 'predefined') {
-                const waveform = document.getElementById('waveform').value;
-                const harmonics = parseInt(document.getElementById('harmonics-pre').value);
-                xMin = -Math.PI;
-                xMax = Math.PI;
-                const step = (xMax - xMin) / points;
-                for (let i = 0; i <= points; i++) {
-                    let x = xMin + i * step;
-                    let y = predefinedSeries(waveform, harmonics, x);
-                    xVals.push(x.toFixed(4));
-                    yVals.push(y);
-                }
-                document.getElementById('rank-result').innerHTML = `<strong>📈 Predefined ${waveform} wave</strong><br>Harmonics: ${harmonics}`;
-            } 
-            else { // custom mode
-                const expr = document.getElementById('custom-expr').value.trim();
-                if (!expr) {
-                    alert('Please enter a Fourier series expression (e.g., sin(n*x)/n)');
-                    return;
-                }
-                const nStart = parseInt(document.getElementById('n-start').value);
-                let nEnd = parseInt(document.getElementById('harmonics-custom').value);
-                if (isNaN(nStart)) nStart = 1;
-                if (isNaN(nEnd)) nEnd = 5;
-                xMin = parseFloat(document.getElementById('xmin').value);
-                xMax = parseFloat(document.getElementById('xmax').value);
-                if (isNaN(xMin)) xMin = -Math.PI;
-                if (isNaN(xMax)) xMax = Math.PI;
-                
-                const step = (xMax - xMin) / points;
-                let errorMsg = null;
-                for (let i = 0; i <= points; i++) {
-                    let x = xMin + i * step;
-                    try {
-                        let y = evaluateCustomSeries(expr, nStart, nEnd, x);
-                        xVals.push(x.toFixed(4));
-                        yVals.push(y);
-                    } catch (err) {
-                        errorMsg = err.message;
-                        break;
-                    }
-                }
-                if (errorMsg) {
-                    alert(`Error in expression: ${errorMsg}`);
-                    return;
-                }
-                document.getElementById('rank-result').innerHTML = `<strong>📐 Custom Fourier Series</strong><br>Expression: ${expr}<br>n = ${nStart} to ${nEnd} | x ∈ [${xMin.toFixed(2)}, ${xMax.toFixed(2)}]`;
-            }
-            
-            chart.data.labels = xVals;
-            chart.data.datasets[0].data = yVals;
-            chart.update();
-        }
-
-        const computeBtn = document.getElementById('compute-fourier');
-        if (computeBtn) computeBtn.addEventListener('click', update);
-        
-        // Initial update after DOM ready
-        setTimeout(update, 100);
+    loadProblem(0);
+    const nextBtn = document.getElementById('next-problem');
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            loadProblem(currentIndex + 1);
+        });
     }
 };
 
-// ---------- FOURIER QUIZ (8 questions) ----------
+// ---------- FOURIER QUIZ (8 questions, unchanged) ----------
 window.initFourierQuiz = () => {
     const questions = [
         { q: "What is the fundamental period of the Fourier series of a function with fundamental frequency ω₀?", opts: ["2π/ω₀", "ω₀/2π", "π/ω₀", "2πω₀"], correct: 0 },
@@ -156,6 +111,7 @@ window.initFourierQuiz = () => {
     ];
     const container = document.getElementById('quiz-container');
     if (!container) return;
+    container.innerHTML = '';
     questions.forEach((q, idx) => {
         const div = document.createElement('div');
         div.className = 'quiz-question';
@@ -186,7 +142,8 @@ window.initFourierQuiz = () => {
             const selected = document.querySelector(`input[name="q${idx}"]:checked`);
             if (selected && parseInt(selected.value) === q.correct) score++;
         });
-        document.getElementById('quiz-score').innerText = `${score} / ${questions.length}`;
+        const scoreSpan = document.getElementById('quiz-score');
+        if (scoreSpan) scoreSpan.innerText = `${score} / ${questions.length}`;
         alert(`You scored ${score}/${questions.length}`);
     });
 };
