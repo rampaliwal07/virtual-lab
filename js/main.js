@@ -1,156 +1,117 @@
-// Shared utilities and simulation logic
+// Shared helpers + Fourier simulation + Quiz
 
-// Set active nav link based on current page
 document.addEventListener('DOMContentLoaded', () => {
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    const navLinks = document.querySelectorAll('.nav-links a');
-    navLinks.forEach(link => {
-        const href = link.getAttribute('href');
-        if (href === currentPage || (currentPage === '' && href === 'index.html')) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        if (link.getAttribute('href') === currentPage) link.classList.add('active');
     });
-
-    // Initialize simulation if on simulation page
-    if (currentPage === 'simulation.html' && window.initMatrixSim) {
-        window.initMatrixSim();
-    }
-    // Pretest & Posttest handlers
-    if (currentPage === 'pretest.html' && window.initPretest) window.initPretest();
-    if (currentPage === 'posttest.html' && window.initPosttest) window.initPosttest();
+    if (currentPage === 'simulation.html' && window.initFourierSim) window.initFourierSim();
+    if (currentPage === 'quiz.html' && window.initFourierQuiz) window.initFourierQuiz();
     if (currentPage === 'feedback.html' && window.initFeedback) window.initFeedback();
 });
 
-// ---------- MATRIX RANK SIMULATION (GAUSSIAN ELIMINATION) ----------
-function computeRank(matrix) {
-    // Make a deep copy
-    let A = matrix.map(row => [...row]);
-    const rows = A.length, cols = A[0].length;
-    let rank = 0;
-    let row = 0;
-    for (let col = 0; col < cols && row < rows; col++) {
-        // Find pivot
-        let maxRow = row;
-        for (let i = row; i < rows; i++) {
-            if (Math.abs(A[i][col]) > Math.abs(A[maxRow][col])) maxRow = i;
-        }
-        if (Math.abs(A[maxRow][col]) < 1e-9) continue;
-        // Swap rows
-        [A[row], A[maxRow]] = [A[maxRow], A[row]];
-        const pivot = A[row][col];
-        // Normalize row
-        for (let k = col; k < cols; k++) {
-            A[row][k] /= pivot;
-        }
-        // Eliminate below and above
-        for (let i = 0; i < rows; i++) {
-            if (i !== row && Math.abs(A[i][col]) > 1e-9) {
-                const factor = A[i][col];
-                for (let k = col; k < cols; k++) {
-                    A[i][k] -= factor * A[row][k];
-                }
-            }
-        }
-        rank++;
-        row++;
+// ---------- FOURIER SERIES SIMULATION ----------
+// Waveform definitions: returns function f(x) on [-pi, pi]
+const waveforms = {
+    square: (x) => (x > 0 ? 1 : -1),
+    sawtooth: (x) => x / Math.PI,
+    triangle: (x) => {
+        const t = x / Math.PI;
+        return 1 - Math.abs(t);
     }
-    return rank;
+};
+
+// Compute Fourier coefficients for a given waveform and max harmonic
+function fourierSeries(wave, N, x) {
+    let sum = 0;
+    // a0/2 term (average)
+    if (wave === 'square') {
+        // a0 = 0 for square
+        for (let n = 1; n <= N; n += 2) {
+            sum += (4 / (n * Math.PI)) * Math.sin(n * x);
+        }
+    } else if (wave === 'sawtooth') {
+        for (let n = 1; n <= N; n++) {
+            sum += (2 * Math.pow(-1, n+1) / (n * Math.PI)) * Math.sin(n * x);
+        }
+    } else if (wave === 'triangle') {
+        for (let n = 1; n <= N; n++) {
+            const coeff = (8 / (Math.pow(Math.PI,2))) * (Math.sin(n*Math.PI/2)) / (n*n);
+            sum += coeff * Math.sin(n * x);
+        }
+    }
+    return sum;
 }
 
-window.initMatrixSim = () => {
-    const container = document.getElementById('matrix-dynamic');
-    if (!container) return;
-    const sizeSelect = document.getElementById('matrix-size');
-    const matrixGrid = document.getElementById('matrix-grid');
-    const computeBtn = document.getElementById('compute-rank');
-    const rankDisplay = document.getElementById('rank-value');
+window.initFourierSim = () => {
+    // Ensure Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+        script.onload = () => setup();
+        document.head.appendChild(script);
+    } else setup();
 
-    function buildMatrix(size) {
-        matrixGrid.innerHTML = '';
-        matrixGrid.style.display = 'grid';
-        matrixGrid.style.gridTemplateColumns = `repeat(${size}, 90px)`;
-        matrixGrid.style.gap = '12px';
-        matrixGrid.style.justifyContent = 'center';
-        for (let i = 0; i < size; i++) {
-            for (let j = 0; j < size; j++) {
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.value = (i === j) ? '1' : '0';
-                input.classList.add('matrix-cell');
-                input.dataset.row = i;
-                input.dataset.col = j;
-                matrixGrid.appendChild(input);
-            }
-        }
-    }
-
-    sizeSelect.addEventListener('change', (e) => {
-        buildMatrix(parseInt(e.target.value));
-    });
-
-    computeBtn.addEventListener('click', () => {
-        const size = parseInt(sizeSelect.value);
-        const inputs = document.querySelectorAll('#matrix-grid .matrix-cell');
-        let matrix = Array(size).fill().map(() => Array(size).fill(0));
-        inputs.forEach(inp => {
-            const row = parseInt(inp.dataset.row);
-            const col = parseInt(inp.dataset.col);
-            let val = parseFloat(inp.value);
-            if (isNaN(val)) val = 0;
-            matrix[row][col] = val;
+    function setup() {
+        const ctx = document.getElementById('fourierChart').getContext('2d');
+        let chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Fourier Approximation', data: [], borderColor: '#f97316', borderWidth: 2, fill: false, tension: 0.1 }] },
+            options: { responsive: true, maintainAspectRatio: true, scales: { x: { title: { display: true, text: 'x' } }, y: { title: { display: true, text: 'f(x)' } } } }
         });
-        const rank = computeRank(matrix);
-        rankDisplay.innerText = rank;
-        // Animate result
-        rankDisplay.style.transform = 'scale(1.1)';
-        setTimeout(() => rankDisplay.style.transform = 'scale(1)', 200);
-    });
 
-    buildMatrix(3); // default 3x3
+        function update() {
+            const waveform = document.getElementById('waveform').value;
+            const harmonics = parseInt(document.getElementById('harmonics').value);
+            const points = 400;
+            const xMin = -Math.PI, xMax = Math.PI;
+            const step = (xMax - xMin) / points;
+            let xVals = [], yVals = [];
+            for (let i = 0; i <= points; i++) {
+                let x = xMin + i * step;
+                let y = fourierSeries(waveform, harmonics, x);
+                xVals.push(x.toFixed(3));
+                yVals.push(y);
+            }
+            chart.data.labels = xVals;
+            chart.data.datasets[0].data = yVals;
+            chart.data.datasets[0].label = `${waveform} wave, N=${harmonics}`;
+            chart.update();
+            document.getElementById('rank-result').innerHTML = `<strong>📈 Fourier series approximation</strong><br>Waveform: ${waveform} | Harmonics: ${harmonics}`;
+        }
+
+        document.getElementById('compute-fourier').addEventListener('click', update);
+        update(); // initial draw
+    }
 };
 
-// ---------- PRETEST & POSTTEST QUIZ LOGIC ----------
-window.initPretest = () => {
+// ---------- FOURIER QUIZ (8 questions) ----------
+window.initFourierQuiz = () => {
     const questions = [
-        { q: "What is the rank of a zero matrix of order 3x4?", opts: ["0", "3", "4", "12"], correct: 0 },
-        { q: "If a matrix has a non-zero minor of order r and all minors of order r+1 are zero, then rank is:", opts: ["r-1", "r", "r+1", "depends"], correct: 1 },
-        { q: "Rank of identity matrix of order 5 is:", opts: ["5", "1", "0", "None"], correct: 0 },
-        { q: "For a 3x3 matrix with determinant = 0, the maximum possible rank is:", opts: ["3", "2", "1", "0"], correct: 1 },
-        { q: "Rank of matrix [[1,2],[2,4]] is:", opts: ["2", "1", "0", "3"], correct: 1 }
+        { q: "What is the fundamental period of the Fourier series of a function with fundamental frequency ω₀?", opts: ["2π/ω₀", "ω₀/2π", "π/ω₀", "2πω₀"], correct: 0 },
+        { q: "The Fourier series of an odd function contains only:", opts: ["Cosine terms", "Sine terms", "Constant term", "Both sine and cosine"], correct: 1 },
+        { q: "Dirichlet conditions are related to:", opts: ["Convergence of Fourier series", "Laplace transform", "Z-transform", "None"], correct: 0 },
+        { q: "The coefficient a₀ in Fourier series represents:", opts: ["Average value", "Fundamental frequency", "Harmonic amplitude", "Phase shift"], correct: 0 },
+        { q: "Gibbs phenomenon occurs near:", opts: ["Discontinuities", "Smooth points", "Zero crossings", "Infinite intervals"], correct: 0 },
+        { q: "For a square wave, the Fourier coefficients decay as:", opts: ["1/n", "1/n²", "1/√n", "exponentially"], correct: 0 },
+        { q: "The complex exponential form of Fourier series uses:", opts: ["e^(jnω₀t)", "sin(nω₀t)", "cos(nω₀t)", "tan(nω₀t)"], correct: 0 },
+        { q: "Parseval's theorem relates:", opts: ["Energy in time and frequency domains", "Time shift and phase", "Convolution", "Differentiation"], correct: 0 }
     ];
-    renderQuiz(questions, 'pretest-container', 'pretest-score');
-};
-
-window.initPosttest = () => {
-    const questions = [
-        { q: "If the rank of a 4x5 matrix is 3, then nullity is:", opts: ["1", "2", "3", "4"], correct: 1 },
-        { q: "Row rank and column rank are always:", opts: ["Equal", "Different", "Row rank > column rank", "None"], correct: 0 },
-        { q: "Which operation does NOT change the rank?", opts: ["Row scaling", "Row addition", "Row swap", "All of these"], correct: 3 },
-        { q: "Matrix [[1,0,0],[0,0,1],[0,0,0]] has rank:", opts: ["3", "2", "1", "0"], correct: 1 },
-        { q: "For a square matrix of order n, full rank means determinant is:", opts: ["Zero", "Non-zero", "1", "None"], correct: 1 }
-    ];
-    renderQuiz(questions, 'posttest-container', 'posttest-score');
-};
-
-function renderQuiz(questions, containerId, scoreSpanId) {
-    const container = document.getElementById(containerId);
+    const container = document.getElementById('quiz-container');
     if (!container) return;
-    container.innerHTML = '';
     questions.forEach((q, idx) => {
         const div = document.createElement('div');
-        div.classList.add('quiz-question');
-        div.innerHTML = `<p style="font-weight:600; margin:16px 0 8px">${idx+1}. ${q.q}</p>`;
+        div.className = 'quiz-question';
+        div.innerHTML = `<p style="font-weight:600;">${idx+1}. ${q.q}</p>`;
         q.opts.forEach((opt, optIdx) => {
             const label = document.createElement('label');
             label.style.display = 'block';
-            label.style.margin = '8px 0 0 20px';
+            label.style.margin = '6px 0 0 20px';
             const radio = document.createElement('input');
             radio.type = 'radio';
             radio.name = `q${idx}`;
             radio.value = optIdx;
-            radio.style.marginRight = '10px';
+            radio.style.marginRight = '8px';
             label.appendChild(radio);
             label.appendChild(document.createTextNode(opt));
             div.appendChild(label);
@@ -159,36 +120,31 @@ function renderQuiz(questions, containerId, scoreSpanId) {
     });
     const submitBtn = document.createElement('button');
     submitBtn.innerText = 'Submit Answers';
-    submitBtn.classList.add('btn-submit');
-    submitBtn.style.marginTop = '30px';
+    submitBtn.className = 'btn-submit';
+    submitBtn.style.marginTop = '24px';
     container.appendChild(submitBtn);
-
     submitBtn.addEventListener('click', () => {
         let score = 0;
         questions.forEach((q, idx) => {
             const selected = document.querySelector(`input[name="q${idx}"]:checked`);
             if (selected && parseInt(selected.value) === q.correct) score++;
         });
-        const scoreSpan = document.getElementById(scoreSpanId);
-        if (scoreSpan) scoreSpan.innerText = `${score} / ${questions.length}`;
+        document.getElementById('quiz-score').innerText = `${score} / ${questions.length}`;
         alert(`You scored ${score}/${questions.length}`);
     });
-}
+};
 
 // Feedback form
 window.initFeedback = () => {
-    const form = document.getElementById('feedback-form-real');
+    const form = document.getElementById('feedback-form');
     if (form) {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('student-name').value;
             const rating = document.querySelector('input[name="rating"]:checked');
             const comments = document.getElementById('comments').value;
-            if (!rating) {
-                alert('Please select a rating ⭐');
-                return;
-            }
-            alert(`✨ Thank you ${name || 'Student'} for your feedback! ✨\nRating: ${rating.value}⭐\nComment: ${comments.slice(0,100)}`);
+            if (!rating) { alert('Please select a rating'); return; }
+            alert(`Thank you ${name || 'Student'}! Rating: ${rating.value}⭐\nComment: ${comments.slice(0,100)}`);
             form.reset();
         });
     }
