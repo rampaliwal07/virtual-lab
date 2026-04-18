@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Virtual Lab | Rank of Matrix</title>
+    <title>Fourier Series Virtual Lab</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -19,13 +19,11 @@
                     </div>
                 </div>
                 <div class="vlab-brand">
-                    <i class="fas fa-microscope"></i>
-                    <h1>Virtual <span>Labs</span></h1>
+                    <i class="fas fa-waveform"></i>
+                    <h1>Fourier <span>Labs</span></h1>
                 </div>
             </div>
-            <div class="user-tag">
-                <i class="fas fa-graduation-cap"></i> <span>Learner Mode</span>
-            </div>
+            <div class="user-tag"><i class="fas fa-chalkboard-user"></i> <span>Interactive Learner</span></div>
         </div>
     </header>
 
@@ -34,9 +32,8 @@
             <a href="index.html"><i class="fas fa-home"></i> Home</a>
             <a href="aim.html"><i class="fas fa-bullseye"></i> Aim</a>
             <a href="theory.html"><i class="fas fa-book"></i> Theory</a>
-            <a href="pretest.html"><i class="fas fa-question-circle"></i> Pretest</a>
-            <a href="simulation.html"><i class="fas fa-desktop"></i> Simulation</a>
-            <a href="posttest.html"><i class="fas fa-clipboard-list"></i> Posttest</a>
+            <a href="simulation.html"><i class="fas fa-chart-line"></i> Simulation</a>
+            <a href="quiz.html"><i class="fas fa-question-circle"></i> Quiz</a>
             <a href="references.html"><i class="fas fa-book-open"></i> References</a>
             <a href="contributors.html"><i class="fas fa-users"></i> Contributors</a>
             <a href="feedback.html"><i class="fas fa-comment-dots"></i> Feedback</a>
@@ -46,24 +43,18 @@
     <main class="container">
         <div class="main-card">
             <div class="page-header">
-                <h2>🔬 Rank of Matrix Virtual Lab</h2>
-                <p>Engineering Mathematics • Interactive E-learning</p>
+                <h2>📡 Fourier Series Virtual Lab</h2>
+                <p>Engineering Mathematics • Signal Decomposition</p>
             </div>
-            <p style="font-size: 1.1rem; margin-bottom: 32px;">Explore the concept of matrix rank through interactive simulation, self-assessment, and rich theory content. Click any card to begin your journey.</p>
-            <div class="grid-cards">
-                <div class="feature-card" onclick="location.href='aim.html'"><i class="fas fa-bullseye"></i><h3>Aim</h3><p>Understand objectives</p></div>
-                <div class="feature-card" onclick="location.href='theory.html'"><i class="fas fa-chalkboard-user"></i><h3>Theory</h3><p>Learn core concepts</p></div>
-                <div class="feature-card" onclick="location.href='pretest.html'"><i class="fas fa-brain"></i><h3>Pretest</h3><p>Check prior knowledge</p></div>
-                <div class="feature-card" onclick="location.href='simulation.html'"><i class="fas fa-calculator"></i><h3>Simulation</h3><p>Compute rank live</p></div>
-                <div class="feature-card" onclick="location.href='posttest.html'"><i class="fas fa-file-alt"></i><h3>Posttest</h3><p>Validate learning</p></div>
-                <div class="feature-card" onclick="location.href='references.html'"><i class="fas fa-list-ul"></i><h3>References</h3><p>Further resources</p></div>
+            <p style="font-size:1.1rem; margin-bottom:32px;">Explore how any periodic signal can be broken into sines and cosines. Interactively compute Fourier series approximations for square, sawtooth, and triangle waves.</p>
+            <div class="grid-cards" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:25px;">
+                <div class="feature-card" onclick="location.href='simulation.html'"><i class="fas fa-chart-simple"></i><h3>Live Simulation</h3><p>Adjust harmonics → see series converge</p></div>
+                <div class="feature-card" onclick="location.href='quiz.html'"><i class="fas fa-brain"></i><h3>Fourier Quiz</h3><p>Test your knowledge</p></div>
+                <div class="feature-card" onclick="location.href='theory.html'"><i class="fas fa-microscope"></i><h3>Learn Theory</h3><p>Dirichlet conditions, formulas</p></div>
             </div>
         </div>
     </main>
-
-    <footer class="footer">
-        <p>© 2025 Virtual Labs | Applied Sciences & Humanities | Pimpri Chinchwad College of Engineering</p>
-    </footer>
+    <footer class="footer"><p>© 2025 Fourier Virtual Lab | Applied Sciences & Humanities | PCCoE</p></footer>
     <script src="js/main.js"></script>
 </body>
 </html>
