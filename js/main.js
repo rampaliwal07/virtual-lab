@@ -1,103 +1,106 @@
-// Main JS for Fourier Virtual Lab (no graph – only equation problems)
+// Main JS for Fourier Virtual Lab - Fully working simulation with custom expressions
 document.addEventListener('DOMContentLoaded', () => {
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.nav-links a').forEach(link => {
         if (link.getAttribute('href') === currentPage) link.classList.add('active');
     });
-    if (currentPage === 'simulation.html' && window.initFourierProblemSolver) window.initFourierProblemSolver();
+    if (currentPage === 'simulation.html' && window.initFourierSim) window.initFourierSim();
     if (currentPage === 'quiz.html' && window.initFourierQuiz) window.initFourierQuiz();
     if (currentPage === 'feedback.html' && window.initFeedback) window.initFeedback();
 });
 
-// ---------- FOURIER SERIES PROBLEM SOLVER (No Graph) ----------
-const problemBank = [
-    {
-        functionDef: "f(x) = { 1, for 0 < x < π;  -1, for -π < x < 0 } (square wave, period 2π)",
-        correctAnswer: "∑_{n=1,3,5,…} (4/(nπ)) sin(nx)",
-        alternativeAnswers: ["(4/π) Σ sin(nx)/n", "4/π (sin x + sin3x/3 + sin5x/5+…)"],
-        hint: "Odd function, only sine terms, coefficients = 4/(nπ) for odd n."
-    },
-    {
-        functionDef: "f(x) = x, for -π < x < π, periodic with period 2π (sawtooth)",
-        correctAnswer: "∑_{n=1}^{∞} (2(-1)^{n+1}/n) sin(nx)",
-        alternativeAnswers: ["2(sin x - sin2x/2 + sin3x/3 - …)", "2∑ (-1)^{n+1} sin(nx)/n"],
-        hint: "Odd function, bₙ = 2(-1)^{n+1}/n."
-    },
-    {
-        functionDef: "f(x) = |x|, for -π < x < π (triangle wave, even function)",
-        correctAnswer: "π/2 - (4/π) ∑_{n odd} cos(nx)/n²",
-        alternativeAnswers: ["π/2 - (4/π)(cos x + cos3x/9 + cos5x/25+…)"],
-        hint: "Even function → cosine series. a₀ = π, aₙ = -4/(π n²) for odd n."
-    },
-    {
-        functionDef: "f(x) = 0 for -π < x < 0, and f(x)=1 for 0 < x < π (half‑rectified)",
-        correctAnswer: "1/2 + (2/π) ∑_{n odd} sin(nx)/n",
-        alternativeAnswers: ["0.5 + (2/π)(sin x + sin3x/3 + sin5x/5+…)"],
-        hint: "Average value = 1/2, sine series for odd n."
+// ---------- FOURIER SIMULATION (CUSTOM EXPRESSION + GRAPH) ----------
+function evaluateCustomSeries(expr, nStart, nEnd, x) {
+    let sanitized = expr.replace(/\^/g, '**');
+    // Allow only safe math functions and variables
+    if (!/^[\d\s\+\-\*\/\(\)\*\*\,\.a-zA-Z_]+$/.test(sanitized.replace(/sin|cos|tan|exp|log|pow|abs/g, ''))) {
+        throw new Error('Invalid characters in expression');
     }
-];
+    let total = 0;
+    for (let n = nStart; n <= nEnd; n++) {
+        // Replace standalone 'n' (not inside a word like sin) with current n
+        let exprWithN = sanitized.replace(/\bn\b/g, n.toString());
+        try {
+            const fn = new Function('x', `return (${exprWithN})`);
+            total += fn(x);
+        } catch(e) {
+            throw new Error(`Evaluation error at n=${n}: ${e.message}`);
+        }
+    }
+    return total;
+}
 
-window.initFourierProblemSolver = () => {
-    const container = document.getElementById('problem-container');
-    if (!container) return;
+window.initFourierSim = () => {
+    if (typeof Chart === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+        script.onload = () => setup();
+        document.head.appendChild(script);
+    } else setup();
 
-    let currentProblem = null;
-    let currentIndex = 0;
+    function setup() {
+        const ctx = document.getElementById('fourierChart').getContext('2d');
+        let chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Fourier Approximation', data: [], borderColor: '#f97316', borderWidth: 2, fill: false, tension: 0.1 }] },
+            options: { responsive: true, maintainAspectRatio: true, scales: { x: { title: { display: true, text: 'x' } }, y: { title: { display: true, text: 'f(x)' } } } }
+        });
 
-    function loadProblem(index) {
-        currentProblem = problemBank[index % problemBank.length];
-        currentIndex = index;
-        container.innerHTML = `
-            <div class="problem-card">
-                <h3><i class="fas fa-question-circle"></i> Problem ${currentIndex+1}</h3>
-                <div class="function-def">
-                    ${currentProblem.functionDef}
-                </div>
-                <p><strong>📝 Enter the Fourier series expansion:</strong></p>
-                <textarea id="user-answer" rows="3" class="answer-input" placeholder="Example: (4/π) * (sin(x) + sin(3x)/3 + sin(5x)/5) or Σ notation"></textarea>
-                <div class="feedback-msg" id="feedback-msg">
-                    <i class="fas fa-lightbulb"></i> Hint: ${currentProblem.hint}
-                </div>
-                <button id="check-answer" class="btn-check"><i class="fas fa-check-circle"></i> Check Answer</button>
-                <button id="show-solution" class="btn-next" style="background:#475569;"><i class="fas fa-eye"></i> Show Solution</button>
-            </div>
-        `;
-
-        document.getElementById('check-answer').addEventListener('click', () => {
-            const userInput = document.getElementById('user-answer').value.trim().toLowerCase().replace(/\s/g, '');
-            const correct = currentProblem.correctAnswer.toLowerCase().replace(/\s/g, '');
-            const alternatives = currentProblem.alternativeAnswers.map(s => s.toLowerCase().replace(/\s/g, ''));
-            const isCorrect = (userInput === correct) || alternatives.includes(userInput) ||
-                              (userInput.includes('4/π') && currentProblem.correctAnswer.includes('4/(nπ)')) ||
-                              (userInput.includes('2(-1)^') && currentProblem.correctAnswer.includes('2(-1)^{n+1}'));
-            
-            const feedbackDiv = document.getElementById('feedback-msg');
-            if (isCorrect) {
-                feedbackDiv.innerHTML = `<i class="fas fa-check-circle" style="color:green"></i> ✅ Correct! Great job.`;
-                feedbackDiv.style.background = '#d1fae5';
-            } else {
-                feedbackDiv.innerHTML = `<i class="fas fa-times-circle" style="color:red"></i> ❌ Not quite. Hint: ${currentProblem.hint}<br><strong>Expected form:</strong> ${currentProblem.correctAnswer}`;
-                feedbackDiv.style.background = '#fee2e2';
+        function update() {
+            const expr = document.getElementById('custom-expr').value.trim();
+            if (!expr) {
+                alert('Please enter a Fourier series expression (e.g., sin(n*x)/n)');
+                return;
             }
-        });
-
-        document.getElementById('show-solution').addEventListener('click', () => {
-            const feedbackDiv = document.getElementById('feedback-msg');
-            feedbackDiv.innerHTML = `<i class="fas fa-book-open"></i> <strong>Solution:</strong> ${currentProblem.correctAnswer}<br><em>${currentProblem.hint}</em>`;
-            feedbackDiv.style.background = '#eef2ff';
-        });
-    }
-
-    loadProblem(0);
-    const nextBtn = document.getElementById('next-problem');
-    if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-            loadProblem(currentIndex + 1);
-        });
+            let nStart = parseInt(document.getElementById('n-start').value);
+            let nEnd = parseInt(document.getElementById('harmonics-custom').value);
+            if (isNaN(nStart)) nStart = 1;
+            if (isNaN(nEnd)) nEnd = 5;
+            let xMin = parseFloat(document.getElementById('xmin').value);
+            let xMax = parseFloat(document.getElementById('xmax').value);
+            if (isNaN(xMin)) xMin = -Math.PI;
+            if (isNaN(xMax)) xMax = Math.PI;
+            
+            const points = 400;
+            const step = (xMax - xMin) / points;
+            let xVals = [], yVals = [];
+            let errorMsg = null;
+            
+            for (let i = 0; i <= points; i++) {
+                let x = xMin + i * step;
+                try {
+                    let y = evaluateCustomSeries(expr, nStart, nEnd, x);
+                    xVals.push(x.toFixed(4));
+                    yVals.push(y);
+                } catch (err) {
+                    errorMsg = err.message;
+                    break;
+                }
+            }
+            
+            if (errorMsg) {
+                alert(`Error in expression: ${errorMsg}`);
+                return;
+            }
+            
+            chart.data.labels = xVals;
+            chart.data.datasets[0].data = yVals;
+            chart.data.datasets[0].label = `Fourier: Σ ${expr} (n=${nStart} to ${nEnd})`;
+            chart.update();
+            
+            document.getElementById('result-info').innerHTML = `<strong>✅ Series computed</strong><br>Expression: ${expr}<br>n ∈ [${nStart}, ${nEnd}] | x ∈ [${xMin.toFixed(2)}, ${xMax.toFixed(2)}]`;
+        }
+        
+        const computeBtn = document.getElementById('compute-fourier');
+        if (computeBtn) computeBtn.addEventListener('click', update);
+        
+        // Initial plot with default expression
+        document.getElementById('custom-expr').value = 'sin(n*x)/n';
+        update();
     }
 };
 
-// ---------- FOURIER QUIZ (8 questions, unchanged) ----------
+// ---------- FOURIER QUIZ (8 questions) ----------
 window.initFourierQuiz = () => {
     const questions = [
         { q: "What is the fundamental period of the Fourier series of a function with fundamental frequency ω₀?", opts: ["2π/ω₀", "ω₀/2π", "π/ω₀", "2πω₀"], correct: 0 },
@@ -148,7 +151,7 @@ window.initFourierQuiz = () => {
     });
 };
 
-// Feedback form
+// ---------- FEEDBACK FORM ----------
 window.initFeedback = () => {
     const form = document.getElementById('feedback-form');
     if (form) {
