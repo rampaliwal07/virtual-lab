@@ -3,42 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fourier Series Simulator - Custom Expression</title>
+    <title>Fourier Series Simulator - Equation Problems</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        .expression-input {
+        .problem-card {
+            background: #f8fafc;
+            border-radius: 28px;
+            padding: 24px;
+            margin: 20px 0;
+            border-left: 5px solid #f97316;
+        }
+        .function-def {
+            background: #1e293b;
+            color: #f1f5f9;
+            padding: 16px;
+            border-radius: 20px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .answer-input {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             font-family: monospace;
             font-size: 1rem;
             border-radius: 20px;
             border: 1px solid #cbd5e1;
-            background: #fff;
             margin: 10px 0;
         }
-        .help-text {
-            font-size: 0.85rem;
-            color: #475569;
-            margin-top: 4px;
+        .feedback-msg {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 20px;
+            background: #eef2ff;
         }
-        .mode-switch {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .mode-btn {
-            background: #e2e8f0;
-            color: #1e293b;
-            padding: 8px 20px;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .mode-btn.active {
+        .btn-check {
             background: #f97316;
-            color: white;
+            margin-top: 10px;
+        }
+        .btn-next {
+            background: #2c3e50;
+            margin-left: 10px;
         }
     </style>
 </head>
@@ -58,7 +65,7 @@
                     <h1>Fourier <span>Labs</span></h1>
                 </div>
             </div>
-            <div class="user-tag"><i class="fas fa-sliders-h"></i> <span>Advanced Mode</span></div>
+            <div class="user-tag"><i class="fas fa-puzzle-piece"></i> <span>Problem Solver</span></div>
         </div>
     </header>
 
@@ -67,7 +74,7 @@
             <a href="index.html"><i class="fas fa-home"></i> Home</a>
             <a href="aim.html"><i class="fas fa-bullseye"></i> Aim</a>
             <a href="theory.html"><i class="fas fa-book"></i> Theory</a>
-            <a href="simulation.html" class="active"><i class="fas fa-chart-line"></i> Simulation</a>
+            <a href="simulation.html" class="active"><i class="fas fa-brain"></i> Simulation</a>
             <a href="quiz.html"><i class="fas fa-question-circle"></i> Quiz</a>
             <a href="references.html"><i class="fas fa-book-open"></i> References</a>
             <a href="contributors.html"><i class="fas fa-users"></i> Contributors</a>
@@ -78,106 +85,28 @@
     <main class="container">
         <div class="main-card">
             <div class="page-header">
-                <h2>⚡ Fourier Series Visualizer – Custom Expression</h2>
-                <p>Enter your own Fourier term, choose summation limits, and see the series converge</p>
+                <h2>📐 Fourier Series – Equation Problems</h2>
+                <p>Solve for the Fourier series representation of the given function</p>
             </div>
 
-            <div class="sim-panel">
-                <div class="mode-switch" id="mode-switch">
-                    <div class="mode-btn active" data-mode="predefined">📊 Predefined Waveforms</div>
-                    <div class="mode-btn" data-mode="custom">✍️ Custom Fourier Series</div>
-                </div>
-
-                <!-- Predefined mode (original) -->
-                <div id="predefined-mode">
-                    <div class="control-group">
-                        <label><i class="fas fa-waveform"></i> Waveform:</label>
-                        <select id="waveform">
-                            <option value="square">Square wave</option>
-                            <option value="sawtooth">Sawtooth wave</option>
-                            <option value="triangle">Triangle wave</option>
-                        </select>
-                        <label><i class="fas fa-chart-line"></i> Harmonics (N):</label>
-                        <input type="range" id="harmonics-pre" min="1" max="50" value="5" step="1">
-                        <span id="harmonics-pre-value">5</span>
-                    </div>
-                </div>
-
-                <!-- Custom mode (user enters expression) -->
-                <div id="custom-mode" style="display: none;">
-                    <div class="control-group">
-                        <label><i class="fas fa-infinity"></i> Fourier term aₙ·sin/cos:</label>
-                        <textarea id="custom-expr" rows="2" class="expression-input" placeholder="Example: sin(n*x)/n&#10;Or: cos(n*x)/n^2&#10;Or: ((-1)^n)*sin(n*x)/n"></textarea>
-                        <div class="help-text">
-                            Use <strong>n</strong> (harmonic number) and <strong>x</strong> (variable).<br>
-                            Allowed: sin, cos, exp, log, ^ for power, *, /, +, -, ( ).<br>
-                            Example: <code>sin(n*x)/n</code>  →  ∑_{n=1}^{N} sin(nx)/n
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label><i class="fas fa-calculator"></i> Start n:</label>
-                        <input type="number" id="n-start" value="1" min="1" max="100" step="1" style="width:80px">
-                        <label>End n (N):</label>
-                        <input type="range" id="harmonics-custom" min="1" max="50" value="5" step="1">
-                        <span id="harmonics-custom-value">5</span>
-                    </div>
-                    <div class="control-group">
-                        <label><i class="fas fa-chart-line"></i> X range (min, max):</label>
-                        <input type="number" id="xmin" value="-3.14159" step="0.5" style="width:100px">
-                        <input type="number" id="xmax" value="3.14159" step="0.5" style="width:100px">
-                        <span class="help-text">(default -π to π)</span>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <button id="compute-fourier"><i class="fas fa-sync-alt"></i> Update Plot</button>
-                </div>
+            <div id="problem-container">
+                <!-- Dynamic problem will appear here -->
             </div>
 
-            <div class="chart-container">
-                <canvas id="fourierChart" width="800" height="400"></canvas>
-            </div>
-            <div id="rank-result" style="text-align:center; background:#f1f5f9; border-radius:28px; padding:15px;">
-                Ready – choose mode and adjust parameters
+            <div class="control-group" style="justify-content: center;">
+                <button id="next-problem" class="btn-next"><i class="fas fa-random"></i> New Problem</button>
             </div>
         </div>
     </main>
 
     <footer class="footer">
-        <p>Custom Fourier series – evaluate any ∑ aₙ·sin/cos(nx) | Gibbs phenomenon visible</p>
+        <p>Fourier Series Practice – Enter the correct mathematical expression</p>
     </footer>
 
     <script src="js/main.js"></script>
     <script>
-        // UI toggling between predefined and custom
-        const modeBtns = document.querySelectorAll('.mode-btn');
-        const predefinedDiv = document.getElementById('predefined-mode');
-        const customDiv = document.getElementById('custom-mode');
-        const harmonicsPre = document.getElementById('harmonics-pre');
-        const harmonicsPreVal = document.getElementById('harmonics-pre-value');
-        const harmonicsCustom = document.getElementById('harmonics-custom');
-        const harmonicsCustomVal = document.getElementById('harmonics-custom-value');
-        
-        modeBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                modeBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                if (btn.dataset.mode === 'predefined') {
-                    predefinedDiv.style.display = 'block';
-                    customDiv.style.display = 'none';
-                } else {
-                    predefinedDiv.style.display = 'none';
-                    customDiv.style.display = 'block';
-                }
-                document.getElementById('compute-fourier').click();
-            });
-        });
-        
-        harmonicsPre.addEventListener('input', () => harmonicsPreVal.innerText = harmonicsPre.value);
-        harmonicsCustom.addEventListener('input', () => harmonicsCustomVal.innerText = harmonicsCustom.value);
-        
-        // Initialize simulation after DOM
-        window.initFourierSim();
+        // Initialize the problem solver after DOM loads
+        if (window.initFourierProblemSolver) window.initFourierProblemSolver();
     </script>
 </body>
 </html>
