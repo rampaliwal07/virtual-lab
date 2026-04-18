@@ -1,5 +1,4 @@
-// Shared helpers + Fourier simulation + Quiz
-
+// Shared helpers + Fourier simulation (supports custom expression & predefined)
 document.addEventListener('DOMContentLoaded', () => {
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.nav-links a').forEach(link => {
@@ -10,23 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentPage === 'feedback.html' && window.initFeedback) window.initFeedback();
 });
 
-// ---------- FOURIER SERIES SIMULATION ----------
-// Waveform definitions: returns function f(x) on [-pi, pi]
-const waveforms = {
+// ---------- FOURIER SERIES SIMULATION (with custom expression) ----------
+const predefinedWaveforms = {
     square: (x) => (x > 0 ? 1 : -1),
     sawtooth: (x) => x / Math.PI,
-    triangle: (x) => {
-        const t = x / Math.PI;
-        return 1 - Math.abs(t);
-    }
+    triangle: (x) => 1 - Math.abs(x / Math.PI)
 };
 
-// Compute Fourier coefficients for a given waveform and max harmonic
-function fourierSeries(wave, N, x) {
+// Compute predefined Fourier sum
+function predefinedSeries(wave, N, x) {
     let sum = 0;
-    // a0/2 term (average)
     if (wave === 'square') {
-        // a0 = 0 for square
         for (let n = 1; n <= N; n += 2) {
             sum += (4 / (n * Math.PI)) * Math.sin(n * x);
         }
@@ -43,8 +36,30 @@ function fourierSeries(wave, N, x) {
     return sum;
 }
 
+// Evaluate custom Fourier series from user expression
+function evaluateCustomSeries(expr, nStart, nEnd, x) {
+    // Build a safe evaluator: replace ^ with **, allow sin, cos, exp, log, pow
+    let sanitized = expr.replace(/\^/g, '**');
+    // Validate allowed characters (basic math, n, x)
+    if (!/^[\d\s\+\-\*\/\(\)\*\*\,\.a-zA-Z_]+$/.test(sanitized.replace(/sin|cos|tan|exp|log|pow|abs/g, ''))) {
+        throw new Error('Invalid characters in expression');
+    }
+    let total = 0;
+    for (let n = nStart; n <= nEnd; n++) {
+        // Replace 'n' with current harmonic, but careful not to replace inside 'sin' etc.
+        // Use Function constructor with local variables n and x
+        const exprWithN = sanitized.replace(/n(?![a-z])/gi, n.toString()); // replace standalone n
+        try {
+            const fn = new Function('x', `return (${exprWithN})`);
+            total += fn(x);
+        } catch(e) {
+            throw new Error(`Evaluation error at n=${n}: ${e.message}`);
+        }
+    }
+    return total;
+}
+
 window.initFourierSim = () => {
-    // Ensure Chart.js is loaded
     if (typeof Chart === 'undefined') {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
@@ -61,27 +76,69 @@ window.initFourierSim = () => {
         });
 
         function update() {
-            const waveform = document.getElementById('waveform').value;
-            const harmonics = parseInt(document.getElementById('harmonics').value);
+            const mode = document.querySelector('.mode-btn.active')?.dataset.mode || 'predefined';
+            let xMin, xMax, yVals = [], xVals = [];
             const points = 400;
-            const xMin = -Math.PI, xMax = Math.PI;
-            const step = (xMax - xMin) / points;
-            let xVals = [], yVals = [];
-            for (let i = 0; i <= points; i++) {
-                let x = xMin + i * step;
-                let y = fourierSeries(waveform, harmonics, x);
-                xVals.push(x.toFixed(3));
-                yVals.push(y);
+
+            if (mode === 'predefined') {
+                const waveform = document.getElementById('waveform').value;
+                const harmonics = parseInt(document.getElementById('harmonics-pre').value);
+                xMin = -Math.PI;
+                xMax = Math.PI;
+                const step = (xMax - xMin) / points;
+                for (let i = 0; i <= points; i++) {
+                    let x = xMin + i * step;
+                    let y = predefinedSeries(waveform, harmonics, x);
+                    xVals.push(x.toFixed(4));
+                    yVals.push(y);
+                }
+                document.getElementById('rank-result').innerHTML = `<strong>📈 Predefined ${waveform} wave</strong><br>Harmonics: ${harmonics}`;
+            } 
+            else { // custom mode
+                const expr = document.getElementById('custom-expr').value.trim();
+                if (!expr) {
+                    alert('Please enter a Fourier series expression (e.g., sin(n*x)/n)');
+                    return;
+                }
+                const nStart = parseInt(document.getElementById('n-start').value);
+                let nEnd = parseInt(document.getElementById('harmonics-custom').value);
+                if (isNaN(nStart)) nStart = 1;
+                if (isNaN(nEnd)) nEnd = 5;
+                xMin = parseFloat(document.getElementById('xmin').value);
+                xMax = parseFloat(document.getElementById('xmax').value);
+                if (isNaN(xMin)) xMin = -Math.PI;
+                if (isNaN(xMax)) xMax = Math.PI;
+                
+                const step = (xMax - xMin) / points;
+                let errorMsg = null;
+                for (let i = 0; i <= points; i++) {
+                    let x = xMin + i * step;
+                    try {
+                        let y = evaluateCustomSeries(expr, nStart, nEnd, x);
+                        xVals.push(x.toFixed(4));
+                        yVals.push(y);
+                    } catch (err) {
+                        errorMsg = err.message;
+                        break;
+                    }
+                }
+                if (errorMsg) {
+                    alert(`Error in expression: ${errorMsg}`);
+                    return;
+                }
+                document.getElementById('rank-result').innerHTML = `<strong>📐 Custom Fourier Series</strong><br>Expression: ${expr}<br>n = ${nStart} to ${nEnd} | x ∈ [${xMin.toFixed(2)}, ${xMax.toFixed(2)}]`;
             }
+            
             chart.data.labels = xVals;
             chart.data.datasets[0].data = yVals;
-            chart.data.datasets[0].label = `${waveform} wave, N=${harmonics}`;
             chart.update();
-            document.getElementById('rank-result').innerHTML = `<strong>📈 Fourier series approximation</strong><br>Waveform: ${waveform} | Harmonics: ${harmonics}`;
         }
 
-        document.getElementById('compute-fourier').addEventListener('click', update);
-        update(); // initial draw
+        const computeBtn = document.getElementById('compute-fourier');
+        if (computeBtn) computeBtn.addEventListener('click', update);
+        
+        // Initial update after DOM ready
+        setTimeout(update, 100);
     }
 };
 
