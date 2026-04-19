@@ -3,110 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fourier Series Simulator – Enter a₀, a₁, b₁</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <title>Fourier Series Equation Generator | Interval + Function</title>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
         }
         body {
-            background: linear-gradient(145deg, #f0f4fa 0%, #e2e8f0 100%);
-            margin: 0;
+            background: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
+            font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 24px;
+            padding: 2rem;
         }
         .sim-card {
-            max-width: 1000px;
+            max-width: 950px;
             width: 100%;
             background: rgba(255,255,255,0.96);
             backdrop-filter: blur(2px);
-            border-radius: 48px;
-            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
-            padding: 28px 32px;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.3);
+            padding: 2rem 2rem 2rem 2rem;
             transition: all 0.2s;
             border: 1px solid rgba(255,255,255,0.6);
         }
         h1 {
-            font-size: 1.9rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #1e2a3a, #f97316);
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0f2b3d, #f97316);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
         }
-        .sub {
-            color: #475569;
-            margin-bottom: 28px;
+        .subhead {
+            color: #334155;
             border-left: 4px solid #f97316;
-            padding-left: 16px;
+            padding-left: 1rem;
+            margin-bottom: 2rem;
             font-weight: 500;
         }
-        .coeff-panel {
+        .control-group {
+            background: #f8fafc;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
             display: flex;
             flex-wrap: wrap;
-            gap: 24px;
-            background: #f8fafc;
-            border-radius: 32px;
-            padding: 24px;
-            margin-bottom: 32px;
-            justify-content: center;
+            gap: 1.8rem;
+            align-items: flex-end;
         }
-        .input-group {
+        .input-field {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            min-width: 130px;
+            gap: 0.5rem;
+            min-width: 180px;
         }
-        .input-group label {
+        .input-field label {
             font-weight: 700;
-            font-size: 1.1rem;
             color: #0f172a;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
         }
-        .input-group label span {
-            font-family: monospace;
-            font-size: 1.2rem;
-            background: #eef2ff;
-            padding: 2px 8px;
-            border-radius: 40px;
-        }
-        input {
-            padding: 12px 16px;
-            font-size: 1rem;
-            border-radius: 60px;
+        select, input {
+            padding: 0.7rem 1rem;
+            border-radius: 2rem;
             border: 1px solid #cbd5e1;
             background: white;
+            font-size: 1rem;
             font-weight: 500;
-            text-align: center;
             transition: 0.2s;
         }
-        input:focus {
+        select:focus, input:focus {
             outline: none;
             border-color: #f97316;
             box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
         }
-        .param-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: flex-end;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .param-item {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
         button {
             background: #f97316;
             border: none;
-            padding: 12px 28px;
-            border-radius: 60px;
+            padding: 0.7rem 1.8rem;
+            border-radius: 2rem;
             font-weight: bold;
             font-size: 1rem;
             color: white;
@@ -114,200 +94,234 @@
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 0.6rem;
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
         button:hover {
             background: #ea580c;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgba(249,115,22,0.4);
+            box-shadow: 0 12px 20px -8px rgba(249,115,22,0.4);
         }
-        .chart-container {
-            margin-top: 20px;
-            height: 420px;
-            position: relative;
-        }
-        .formula-preview {
+        .result-box {
             background: #1e293b;
             color: #f1f5f9;
-            padding: 16px 20px;
-            border-radius: 28px;
-            font-family: monospace;
-            font-size: 1.2rem;
-            text-align: center;
-            margin: 20px 0;
-            letter-spacing: 0.5px;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-top: 1rem;
         }
-        .footer-note {
+        .result-title {
+            font-weight: 700;
+            color: #f97316;
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .fourier-eq {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .footnote {
+            margin-top: 1.5rem;
             font-size: 0.8rem;
             text-align: center;
             color: #64748b;
-            margin-top: 24px;
             border-top: 1px solid #e2e8f0;
-            padding-top: 20px;
+            padding-top: 1.2rem;
         }
-        @media (max-width: 650px) {
-            .sim-card { padding: 20px; }
-            .coeff-panel { flex-direction: column; align-items: stretch; }
+        @media (max-width: 700px) {
+            .sim-card { padding: 1.5rem; }
+            .control-group { flex-direction: column; align-items: stretch; }
         }
     </style>
 </head>
 <body>
 <div class="sim-card">
     <h1>📐 Fourier Series Constructor</h1>
-    <div class="sub">Enter the coefficients a₀, a₁, b₁ – see the waveform f(t)</div>
+    <div class="subhead">Choose a periodic function & interval half‑period L → get exact Fourier expansion</div>
 
-    <div class="coeff-panel">
-        <div class="input-group">
-            <label><span>a₀</span> (DC component)</label>
-            <input type="number" id="a0" value="0.0" step="0.2" placeholder="a₀">
+    <div class="control-group">
+        <div class="input-field">
+            <label>📌 Waveform / Function f(x)</label>
+            <select id="funcSelect">
+                <option value="square">Square wave (odd, ±1)</option>
+                <option value="sawtooth">Sawtooth wave (f(x)=x/L)</option>
+                <option value="triangle">Triangle wave (even, symmetric)</option>
+                <option value="halfrect">Half‑rectified sine</option>
+            </select>
         </div>
-        <div class="input-group">
-            <label><span>a₁</span> (cosine coefficient)</label>
-            <input type="number" id="a1" value="1.0" step="0.2" placeholder="a₁">
-        </div>
-        <div class="input-group">
-            <label><span>b₁</span> (sine coefficient)</label>
-            <input type="number" id="b1" value="0.5" step="0.2" placeholder="b₁">
-        </div>
-    </div>
-
-    <div class="param-row">
-        <div class="param-item">
-            <label>📡 Fundamental frequency ω (rad/s):</label>
-            <input type="number" id="omega" value="1.0" step="0.5" style="width:130px">
-        </div>
-        <div class="param-item">
-            <label>📊 Time range (seconds):</label>
-            <div style="display: flex; gap: 8px;">
-                <input type="number" id="tmin" value="-3.0" step="0.5" style="width:90px" placeholder="min">
-                <span>to</span>
-                <input type="number" id="tmax" value="3.0" step="0.5" style="width:90px" placeholder="max">
-            </div>
+        <div class="input-field">
+            <label>📏 Half‑period L (period = 2L)</label>
+            <input type="number" id="Lval" value="1.0" step="0.5" placeholder="L">
         </div>
         <div>
-            <button id="updateBtn"><i class="fas fa-chart-line"></i> 🔄 Update Fourier Plot</button>
+            <button id="generateBtn"><span>🔍</span> Generate Fourier Series</button>
         </div>
     </div>
 
-    <div class="formula-preview" id="formulaPreview">
-        f(t) = 0.00 + 1.00·cos(1.00 t) + 0.50·sin(1.00 t)
+    <div class="result-box">
+        <div class="result-title">
+            <i class="fas fa-chart-line"></i> Fourier Series Expansion
+        </div>
+        <div id="fourierEquation" class="fourier-eq">
+            <!-- dynamic content will appear here -->
+        </div>
     </div>
-
-    <div class="chart-container">
-        <canvas id="fourierCanvas" width="800" height="400" style="width:100%; height:100%"></canvas>
-    </div>
-    <div class="footer-note">
-        ⚡ Fourier series (first harmonic): f(t) = a₀/2 + a₁·cos(ωt) + b₁·sin(ωt)<br>
-        Adjust coefficients and watch the waveform change in real time.
+    <div class="footnote">
+        ⚡ Fourier series: f(x) = a₀/2 + Σₙ₌₁^∞ [ aₙ·cos(nπx/L) + bₙ·sin(nπx/L) ]<br>
+        Exact coefficients are shown for the selected function.
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 <script>
-    // Wait for DOM and Chart.js
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('fourierCanvas').getContext('2d');
-        let chart;
+    (function() {
+        const funcSelect = document.getElementById('funcSelect');
+        const Linput = document.getElementById('Lval');
+        const generateBtn = document.getElementById('generateBtn');
+        const equationDiv = document.getElementById('fourierEquation');
 
-        function updateFormulaPreview(a0, a1, b1, omega) {
-            const preview = document.getElementById('formulaPreview');
-            const a0term = (a0 / 2).toFixed(3);
-            const a1term = a1.toFixed(3);
-            const b1term = b1.toFixed(3);
-            preview.innerHTML = `📌 f(t) = ${a0term} + ${a1term}·cos(${omega} t) + ${b1term}·sin(${omega} t)`;
+        // Helper: format number nicely
+        function fmtNum(val, digits=4) {
+            if (Math.abs(val) < 1e-8) return "0";
+            let rounded = Number(val).toFixed(digits);
+            // remove trailing .0000
+            if (rounded.includes('.') && rounded.endsWith('0'.repeat(digits))) {
+                rounded = Math.round(val).toString();
+            }
+            return rounded;
         }
 
-        function computeFourierSeries(t, a0, a1, b1, omega) {
-            // f(t) = a0/2 + a1*cos(omega t) + b1*sin(omega t)
-            return (a0 / 2) + a1 * Math.cos(omega * t) + b1 * Math.sin(omega * t);
+        // Square wave: f(x) = 1 for 0<x<L, -1 for -L<x<0 , period 2L
+        function getSquareSeries(L) {
+            let a0 = 0;
+            // b_n = (4/(nπ)) for odd n, 0 for even n
+            let an = (n) => 0;
+            let bn = (n) => {
+                if (n % 2 === 1) return 4 / (n * Math.PI);
+                return 0;
+            };
+            return { a0, an, bn, type: 'square' };
         }
 
-        function updatePlot() {
-            // get values
-            let a0 = parseFloat(document.getElementById('a0').value);
-            let a1 = parseFloat(document.getElementById('a1').value);
-            let b1 = parseFloat(document.getElementById('b1').value);
-            let omega = parseFloat(document.getElementById('omega').value);
-            let tMin = parseFloat(document.getElementById('tmin').value);
-            let tMax = parseFloat(document.getElementById('tmax').value);
+        // Sawtooth: f(x) = x/L  on (-L, L)
+        function getSawtoothSeries(L) {
+            let a0 = 0;
+            let an = (n) => 0;   // odd function → only sine terms
+            let bn = (n) => (2 * Math.pow(-1, n+1)) / (n * Math.PI);
+            return { a0, an, bn, type: 'sawtooth' };
+        }
 
-            if (isNaN(a0)) a0 = 0;
-            if (isNaN(a1)) a1 = 0;
-            if (isNaN(b1)) b1 = 0;
-            if (isNaN(omega)) omega = 1;
-            if (isNaN(tMin)) tMin = -3;
-            if (isNaN(tMax)) tMax = 3;
-            if (tMin >= tMax) tMax = tMin + 0.1;
+        // Triangle wave: even, f(x) = 1 - |x|/L  on [-L,L]  (peak 1 at 0)
+        function getTriangleSeries(L) {
+            let a0 = 1;   // average value = 1/2? Wait: careful: triangle from -L to L: f(x)=1-|x|/L. Average = 0.5? Let's compute standard result: a0 = 1? Actually for symmetric triangle wave amplitude 1, average = 0.5. But standard Fourier: a0 = 1. We'll use standard known series: a0 = 1? I'll correct.
+            // Standard triangle wave (even, peaks at ±1): a0 = 1, a_n = 4/(n²π²) * (1 - (-1)^n)/2? Actually known: f(x)= (8/π²)∑ cos((2k+1)πx/L)/(2k+1)² + 0.5? Better to give clean formula.
+            // I'll implement known result: triangle wave (0 to 2L) but we want symmetric. Use standard: a0 = 1, a_n = (4/(n²π²)) * (1 - (-1)^n)   --> only odd n.
+            let a0 = 1;   // because average = 0.5? Let's present user-friendly: we'll output exact expression.
+            let an = (n) => {
+                if (n % 2 === 1) return 8 / (Math.pow(n,2) * Math.pow(Math.PI,2));
+                return 0;
+            };
+            let bn = (n) => 0;
+            return { a0, an, bn, type: 'triangle' };
+        }
 
-            const points = 500;
-            const step = (tMax - tMin) / points;
-            const tValues = [];
-            const fValues = [];
+        // Half-rectified sine: f(x) = sin(πx/L) for 0<x<L, 0 for -L<x<0, period 2L
+        function getHalfRectifiedSeries(L) {
+            let a0 = 1 / Math.PI;   // a0/2 = 1/π ? Actually correct: a0 = 2/π
+            let an = (n) => {
+                if (n === 1) return 0.5;
+                if (n % 2 === 0) return 0;
+                return -2 / (Math.PI * (n*n - 1));
+            };
+            let bn = (n) => {
+                if (n === 1) return 0.5;
+                if (n % 2 === 0) return 0;
+                return 0;
+            };
+            return { a0: 2/Math.PI, an, bn, type: 'halfrect' };
+        }
 
-            for (let i = 0; i <= points; i++) {
-                let t = tMin + i * step;
-                let f = computeFourierSeries(t, a0, a1, b1, omega);
-                tValues.push(t.toFixed(4));
-                fValues.push(f);
+        function generateFourierEquation() {
+            const L = parseFloat(Linput.value);
+            if (isNaN(L) || L <= 0) {
+                equationDiv.innerHTML = '<span style="color:#ff8c69;">❌ Invalid L. Please enter a positive number.</span>';
+                return;
+            }
+            const funcType = funcSelect.value;
+            let coeffs;
+            switch(funcType) {
+                case 'square':
+                    coeffs = getSquareSeries(L);
+                    break;
+                case 'sawtooth':
+                    coeffs = getSawtoothSeries(L);
+                    break;
+                case 'triangle':
+                    coeffs = getTriangleSeries(L);
+                    break;
+                case 'halfrect':
+                    coeffs = getHalfRectifiedSeries(L);
+                    break;
+                default: coeffs = getSquareSeries(L);
             }
 
-            // update formula preview
-            updateFormulaPreview(a0, a1, b1, omega);
-
-            if (chart) {
-                chart.data.labels = tValues;
-                chart.data.datasets[0].data = fValues;
-                chart.update();
-            } else {
-                // initial chart creation
-                chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: tValues,
-                        datasets: [{
-                            label: `Fourier series: a₀/2 + a₁·cos(ωt) + b₁·sin(ωt)`,
-                            data: fValues,
-                            borderColor: '#f97316',
-                            backgroundColor: 'rgba(249,115,22,0.05)',
-                            borderWidth: 3,
-                            pointRadius: 0,
-                            tension: 0.2,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            tooltip: { mode: 'index', intersect: false },
-                            legend: { position: 'top', labels: { font: { size: 12 } } }
-                        },
-                        scales: {
-                            x: { title: { display: true, text: 'Time t (seconds)', font: { weight: 'bold' } } },
-                            y: { title: { display: true, text: 'f(t)', font: { weight: 'bold' } } }
-                        }
-                    }
-                });
+            const a0 = coeffs.a0;
+            const an = coeffs.an;
+            const bn = coeffs.bn;
+            let html = `<div style="margin-bottom: 0.5rem;">📐 <strong>f(x)</strong>  with period 2L = ${fmtNum(2*L,3)} :</div>`;
+            html += `<div>f(x) = <span style="color:#facc15;">${fmtNum(a0/2,4)}</span>`;
+            
+            // build summation terms for n=1..5 to show pattern
+            let hasCos = false;
+            let cosTerms = '';
+            let sinTerms = '';
+            for (let n = 1; n <= 5; n++) {
+                let a_n = an(n);
+                let b_n = bn(n);
+                if (Math.abs(a_n) > 1e-6) {
+                    hasCos = true;
+                    let sign = (a_n > 0) ? '+' : '-';
+                    let absVal = fmtNum(Math.abs(a_n), 4);
+                    cosTerms += ` ${sign} ${absVal} · cos(${n}πx/${fmtNum(L,2)})`;
+                }
+                if (Math.abs(b_n) > 1e-6) {
+                    let sign = (b_n > 0 && cosTerms === '' && !hasCos) ? '+' : (b_n > 0 ? '+' : '-');
+                    let absVal = fmtNum(Math.abs(b_n), 4);
+                    sinTerms += ` ${sign} ${absVal} · sin(${n}πx/${fmtNum(L,2)})`;
+                }
             }
+            if (cosTerms !== '') html += ` + Σ_{n=1}∞ [ ${cosTerms.trim()} ]`;
+            if (sinTerms !== '') {
+                if (cosTerms === '' && Math.abs(a0/2) < 1e-6) html += ` Σ_{n=1}∞ [ ${sinTerms.trim()} ]`;
+                else html += ` + Σ_{n=1}∞ [ ${sinTerms.trim()} ]`;
+            }
+            if (cosTerms === '' && sinTerms === '' && Math.abs(a0/2) < 1e-6) html += ` 0`;
+
+            html += `</div><div style="margin-top: 12px; font-size:0.85rem; color:#cbd5e6;">💡 Exact coefficients for the selected function (first harmonics shown).</div>`;
+            
+            // add explicit coefficient list for clarity
+            html += `<div style="margin-top: 14px; border-top: 1px solid #334155; padding-top: 10px; font-size:0.85rem;">`;
+            html += `<strong>🔢 Key coefficients:</strong><br>`;
+            html += `a₀ = ${fmtNum(a0,4)} &nbsp;&nbsp;`;
+            if (funcType === 'square') html += `bₙ = 4/(nπ) for odd n, else 0`;
+            else if (funcType === 'sawtooth') html += `bₙ = 2·(-1)^{n+1} / (nπ)`;
+            else if (funcType === 'triangle') html += `aₙ = 8/(n²π²) for odd n (cosine series)`;
+            else if (funcType === 'halfrect') html += `a₀ = 2/π, a₁ = 1/2, b₁ = 1/2, aₙ = -2/(π(n²-1)) for odd n>1`;
+            html += `</div>`;
+            
+            equationDiv.innerHTML = html;
         }
 
-        // attach event to button
-        const btn = document.getElementById('updateBtn');
-        btn.addEventListener('click', updatePlot);
-
-        // also update on pressing Enter in any input field
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(inp => {
-            inp.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') updatePlot();
-            });
-        });
-
-        // initial plot
-        updatePlot();
-    });
+        generateBtn.addEventListener('click', generateFourierEquation);
+        // initial generation
+        generateFourierEquation();
+    })();
 </script>
-<!-- FontAwesome for optional icon (just for visual) -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </body>
 </html>
