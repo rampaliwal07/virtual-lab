@@ -1,19 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Fourier Series Simulator</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link rel="stylesheet" href="css/style.css"><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script></head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fourier Series Simulator – Enter a₀, a₁, b₁</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #f0f4fa 0%, #e2e8f0 100%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+        .sim-card {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(2px);
+            border-radius: 48px;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
+            padding: 28px 32px;
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e2a3a, #f97316);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 0.25rem;
+        }
+        .sub {
+            color: #475569;
+            margin-bottom: 28px;
+            border-left: 4px solid #f97316;
+            padding-left: 16px;
+            font-weight: 500;
+        }
+        .coeff-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            background: #f8fafc;
+            border-radius: 32px;
+            padding: 24px;
+            margin-bottom: 32px;
+            justify-content: center;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 130px;
+        }
+        .input-group label {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #0f172a;
+        }
+        .input-group label span {
+            font-family: monospace;
+            font-size: 1.2rem;
+            background: #eef2ff;
+            padding: 2px 8px;
+            border-radius: 40px;
+        }
+        input {
+            padding: 12px 16px;
+            font-size: 1rem;
+            border-radius: 60px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-weight: 500;
+            text-align: center;
+            transition: 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
+        }
+        .param-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .param-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        button {
+            background: #f97316;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        button:hover {
+            background: #ea580c;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(249,115,22,0.4);
+        }
+        .chart-container {
+            margin-top: 20px;
+            height: 420px;
+            position: relative;
+        }
+        .formula-preview {
+            background: #1e293b;
+            color: #f1f5f9;
+            padding: 16px 20px;
+            border-radius: 28px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 20px 0;
+            letter-spacing: 0.5px;
+        }
+        .footer-note {
+            font-size: 0.8rem;
+            text-align: center;
+            color: #64748b;
+            margin-top: 24px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+        @media (max-width: 650px) {
+            .sim-card { padding: 20px; }
+            .coeff-panel { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
 <body>
-    <header class="glass-header"><div class="container header-flex"><div class="logo-area"><div class="college-brand"><img src="https://raw.githubusercontent.com/dineshkute90/virtual_lab_LAUC/main/pccoe.png" class="logo-img"><div class="college-text"><div class="main">APPLIED SCIENCES & HUMANITIES</div><div class="sub">PCCoE</div></div></div><div class="vlab-brand"><i class="fas fa-waveform"></i><h1>Fourier <span>Labs</span></h1></div></div><div class="user-tag"><i class="fas fa-sliders-h"></i><span>Interactive</span></div></div></header>
-    <nav class="nav-wrapper"><div class="container nav-links"><a href="index.html">Home</a><a href="aim.html">Aim</a><a href="theory.html">Theory</a><a href="pretest.html">Pretest</a><a href="simulation.html" class="active">Simulation</a><a href="posttest.html">Posttest</a><a href="references.html">References</a><a href="contributors.html">Contributors</a><a href="feedback.html">Feedback</a></div></nav>
-    <main class="container"><div class="main-card"><div class="page-header"><h2>⚡ Fourier Series Visualizer</h2><p>Enter any Fourier term (use n and x), set summation limits → see the graph</p></div>
-        <div class="control-group"><label>Expression:</label><textarea id="custom-expr" rows="2" class="expression-input" placeholder="e.g., sin(n*x)/n"></textarea></div>
-        <div class="control-group"><label>Start n:</label><input type="number" id="n-start" value="1"><label>End n (N):</label><input type="range" id="harmonics" min="1" max="50" value="5"><span id="harmonics-value">5</span></div>
-        <div class="control-group"><label>X min:</label><input type="number" id="xmin" value="-3.14159"><label>X max:</label><input type="number" id="xmax" value="3.14159"></div>
-        <button id="compute-fourier"><i class="fas fa-chart-line"></i> Update Plot</button>
-        <div class="chart-container"><canvas id="fourierChart"></canvas></div>
-        <div id="result-info" class="result-info">Ready – enter expression and click Update Plot</div>
-    </div></main>
-    <footer class="footer"><p>Fourier series visualizer – custom ∑ aₙ·sin/cos(nx)</p></footer>
-    <script src="js/main.js"></script>
-    <script>document.getElementById('harmonics').addEventListener('input', (e) => document.getElementById('harmonics-value').innerText = e.target.value);</script>
+<div class="sim-card">
+    <h1>📐 Fourier Series Constructor</h1>
+    <div class="sub">Enter the coefficients a₀, a₁, b₁ – see the waveform f(t)</div>
+
+    <div class="coeff-panel">
+        <div class="input-group">
+            <label><span>a₀</span> (DC component)</label>
+            <input type="number" id="a0" value="0.0" step="0.2" placeholder="a₀">
+        </div>
+        <div class="input-group">
+            <label><span>a₁</span> (cosine coefficient)</label>
+            <input type="number" id="a1" value="1.0" step="0.2" placeholder="a₁">
+        </div>
+        <div class="input-group">
+            <label><span>b₁</span> (sine coefficient)</label>
+            <input type="number" id="b1" value="0.5" step="0.2" placeholder="b₁">
+        </div>
+    </div>
+
+    <div class="param-row">
+        <div class="param-item">
+            <label>📡 Fundamental frequency ω (rad/s):</label>
+            <input type="number" id="omega" value="1.0" step="0.5" style="width:130px">
+        </div>
+        <div class="param-item">
+            <label>📊 Time range (seconds):</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="number" id="tmin" value="-3.0" step="0.5" style="width:90px" placeholder="min">
+                <span>to</span>
+                <input type="number" id="tmax" value="3.0" step="0.5" style="width:90px" placeholder="max">
+            </div>
+        </div>
+        <div>
+            <button id="updateBtn"><i class="fas fa-chart-line"></i> 🔄 Update Fourier Plot</button>
+        </div>
+    </div>
+
+    <div class="formula-preview" id="formulaPreview">
+        f(t) = 0.00 + 1.00·cos(1.00 t) + 0.50·sin(1.00 t)
+    </div>
+
+    <div class="chart-container">
+        <canvas id="fourierCanvas" width="800" height="400" style="width:100%; height:100%"></canvas>
+    </div>
+    <div class="footer-note">
+        ⚡ Fourier series (first harmonic): f(t) = a₀/2 + a₁·cos(ωt) + b₁·sin(ωt)<br>
+        Adjust coefficients and watch the waveform change in real time.
+    </div>
+</div>
+
+<script>
+    // Wait for DOM and Chart.js
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('fourierCanvas').getContext('2d');
+        let chart;
+
+        function updateFormulaPreview(a0, a1, b1, omega) {
+            const preview = document.getElementById('formulaPreview');
+            const a0term = (a0 / 2).toFixed(3);
+            const a1term = a1.toFixed(3);
+            const b1term = b1.toFixed(3);
+            preview.innerHTML = `📌 f(t) = ${a0term} + ${a1term}·cos(${omega} t) + ${b1term}·sin(${omega} t)`;
+        }
+
+        function computeFourierSeries(t, a0, a1, b1, omega) {
+            // f(t) = a0/2 + a1*cos(omega t) + b1*sin(omega t)
+            return (a0 / 2) + a1 * Math.cos(omega * t) + b1 * Math.sin(omega * t);
+        }
+
+        function updatePlot() {
+            // get values
+            let a0 = parseFloat(document.getElementById('a0').value);
+            let a1 = parseFloat(document.getElementById('a1').value);
+            let b1 = parseFloat(document.getElementById('b1').value);
+            let omega = parseFloat(document.getElementById('omega').value);
+            let tMin = parseFloat(document.getElementById('tmin').value);
+            let tMax = parseFloat(document.getElementById('tmax').value);
+
+            if (isNaN(a0)) a0 = 0;
+            if (isNaN(a1)) a1 = 0;
+            if (isNaN(b1)) b1 = 0;
+            if (isNaN(omega)) omega = 1;
+            if (isNaN(tMin)) tMin = -3;
+            if (isNaN(tMax)) tMax = 3;
+            if (tMin >= tMax) tMax = tMin + 0.1;
+
+            const points = 500;
+            const step = (tMax - tMin) / points;
+            const tValues = [];
+            const fValues = [];
+
+            for (let i = 0; i <= points; i++) {
+                let t = tMin + i * step;
+                let f = computeFourierSeries(t, a0, a1, b1, omega);
+                tValues.push(t.toFixed(4));
+                fValues.push(f);
+            }
+
+            // update formula preview
+            updateFormulaPreview(a0, a1, b1, omega);
+
+            if (chart) {
+                chart.data.labels = tValues;
+                chart.data.datasets[0].data = fValues;
+                chart.update();
+            } else {
+                // initial chart creation
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: tValues,
+                        datasets: [{
+                            label: `Fourier series: a₀/2 + a₁·cos(ωt) + b₁·sin(ωt)`,
+                            data: fValues,
+                            borderColor: '#f97316',
+                            backgroundColor: 'rgba(249,115,22,0.05)',
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            tension: 0.2,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            tooltip: { mode: 'index', intersect: false },
+                            legend: { position: 'top', labels: { font: { size: 12 } } }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Time t (seconds)', font: { weight: 'bold' } } },
+                            y: { title: { display: true, text: 'f(t)', font: { weight: 'bold' } } }
+                        }
+                    }
+                });
+            }
+        }
+
+        // attach event to button
+        const btn = document.getElementById('updateBtn');
+        btn.addEventListener('click', updatePlot);
+
+        // also update on pressing Enter in any input field
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(inp => {
+            inp.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') updatePlot();
+            });
+        });
+
+        // initial plot
+        updatePlot();
+    });
+</script>
+<!-- FontAwesome for optional icon (just for visual) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </body>
 </html>
