@@ -1,152 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fourier Series Simulator - Custom Expression</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        .expression-input {
-            width: 100%;
-            padding: 12px;
-            font-family: monospace;
-            font-size: 1rem;
-            border-radius: 20px;
-            border: 1px solid #cbd5e1;
-            background: #fff;
-            margin: 10px 0;
-        }
-        .help-text {
-            font-size: 0.85rem;
-            color: #475569;
-            margin-top: 4px;
-        }
-        .control-group {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 20px;
-            margin: 15px 0;
-        }
-        .control-group label {
-            font-weight: 600;
-        }
-        button {
-            background: #f97316;
-            border: none;
-            padding: 12px 28px;
-            border-radius: 40px;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button:hover {
-            background: #ea580c;
-            transform: scale(1.02);
-        }
-        .chart-container {
-            margin: 30px 0;
-            height: 400px;
-        }
-        .result-info {
-            background: #f1f5f9;
-            border-radius: 28px;
-            padding: 15px;
-            text-align: center;
-            margin-top: 20px;
-        }
-    </style>
-</head>
+<head><meta charset="UTF-8"><title>Fourier Series Simulator</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link rel="stylesheet" href="css/style.css"><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script></head>
 <body>
-    <header class="glass-header">
-        <div class="container header-flex">
-            <div class="logo-area">
-                <div class="college-brand">
-                    <img src="https://raw.githubusercontent.com/dineshkute90/virtual_lab_LAUC/main/pccoe.png" class="logo-img" onerror="this.src='https://via.placeholder.com/52?text=PCE'">
-                    <div class="college-text">
-                        <div class="main">APPLIED SCIENCES & HUMANITIES</div>
-                        <div class="sub">Pimpri Chinchwad College of Engineering</div>
-                    </div>
-                </div>
-                <div class="vlab-brand">
-                    <i class="fas fa-waveform"></i>
-                    <h1>Fourier <span>Labs</span></h1>
-                </div>
-            </div>
-            <div class="user-tag"><i class="fas fa-sliders-h"></i> <span>Interactive</span></div>
-        </div>
-    </header>
-
-    <nav class="nav-wrapper">
-        <div class="container nav-links">
-            <a href="index.html"><i class="fas fa-home"></i> Home</a>
-            <a href="aim.html"><i class="fas fa-bullseye"></i> Aim</a>
-            <a href="theory.html"><i class="fas fa-book"></i> Theory</a>
-            <a href="simulation.html" class="active"><i class="fas fa-chart-line"></i> Simulation</a>
-            <a href="quiz.html"><i class="fas fa-question-circle"></i> Quiz</a>
-            <a href="references.html"><i class="fas fa-book-open"></i> References</a>
-            <a href="contributors.html"><i class="fas fa-users"></i> Contributors</a>
-            <a href="feedback.html"><i class="fas fa-comment-dots"></i> Feedback</a>
-        </div>
-    </nav>
-
-    <main class="container">
-        <div class="main-card">
-            <div class="page-header">
-                <h2>⚡ Fourier Series Visualizer – Custom Expression</h2>
-                <p>Enter any Fourier term, set summation limits, and see the series converge</p>
-            </div>
-
-            <div class="sim-panel">
-                <div class="control-group">
-                    <label><i class="fas fa-infinity"></i> Fourier term aₙ·sin/cos:</label>
-                    <textarea id="custom-expr" rows="2" class="expression-input" placeholder="Example: sin(n*x)/n&#10;Or: cos(n*x)/n^2&#10;Or: ((-1)^n)*sin(n*x)/n"></textarea>
-                    <div class="help-text">
-                        Use <strong>n</strong> (harmonic number) and <strong>x</strong> (variable).<br>
-                        Allowed: sin, cos, exp, log, ^ for power, *, /, +, -, ( ).<br>
-                        Example: <code>sin(n*x)/n</code>  →  ∑_{n=1}^{N} sin(nx)/n
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label><i class="fas fa-calculator"></i> Start n:</label>
-                    <input type="number" id="n-start" value="1" min="1" max="100" step="1" style="width:80px">
-                    <label>End n (N):</label>
-                    <input type="range" id="harmonics-custom" min="1" max="50" value="5" step="1">
-                    <span id="harmonics-custom-value">5</span>
-                </div>
-                <div class="control-group">
-                    <label><i class="fas fa-chart-line"></i> X range (min, max):</label>
-                    <input type="number" id="xmin" value="-3.14159" step="0.5" style="width:100px">
-                    <input type="number" id="xmax" value="3.14159" step="0.5" style="width:100px">
-                    <span class="help-text">(default -π to π)</span>
-                </div>
-                <div class="control-group">
-                    <button id="compute-fourier"><i class="fas fa-sync-alt"></i> Update Plot</button>
-                </div>
-            </div>
-
-            <div class="chart-container">
-                <canvas id="fourierChart" width="800" height="400"></canvas>
-            </div>
-            <div id="result-info" class="result-info">
-                Ready – enter expression and click Update Plot
-            </div>
-        </div>
-    </main>
-
-    <footer class="footer">
-        <p>Custom Fourier series – evaluate ∑ aₙ·sin/cos(nx) | Gibbs phenomenon visible</p>
-    </footer>
-
+    <header class="glass-header"><div class="container header-flex"><div class="logo-area"><div class="college-brand"><img src="https://raw.githubusercontent.com/dineshkute90/virtual_lab_LAUC/main/pccoe.png" class="logo-img"><div class="college-text"><div class="main">APPLIED SCIENCES & HUMANITIES</div><div class="sub">PCCoE</div></div></div><div class="vlab-brand"><i class="fas fa-waveform"></i><h1>Fourier <span>Labs</span></h1></div></div><div class="user-tag"><i class="fas fa-sliders-h"></i><span>Interactive</span></div></div></header>
+    <nav class="nav-wrapper"><div class="container nav-links"><a href="index.html">Home</a><a href="aim.html">Aim</a><a href="theory.html">Theory</a><a href="pretest.html">Pretest</a><a href="simulation.html" class="active">Simulation</a><a href="posttest.html">Posttest</a><a href="references.html">References</a><a href="contributors.html">Contributors</a><a href="feedback.html">Feedback</a></div></nav>
+    <main class="container"><div class="main-card"><div class="page-header"><h2>⚡ Fourier Series Visualizer</h2><p>Enter any Fourier term (use n and x), set summation limits → see the graph</p></div>
+        <div class="control-group"><label>Expression:</label><textarea id="custom-expr" rows="2" class="expression-input" placeholder="e.g., sin(n*x)/n"></textarea></div>
+        <div class="control-group"><label>Start n:</label><input type="number" id="n-start" value="1"><label>End n (N):</label><input type="range" id="harmonics" min="1" max="50" value="5"><span id="harmonics-value">5</span></div>
+        <div class="control-group"><label>X min:</label><input type="number" id="xmin" value="-3.14159"><label>X max:</label><input type="number" id="xmax" value="3.14159"></div>
+        <button id="compute-fourier"><i class="fas fa-chart-line"></i> Update Plot</button>
+        <div class="chart-container"><canvas id="fourierChart"></canvas></div>
+        <div id="result-info" class="result-info">Ready – enter expression and click Update Plot</div>
+    </div></main>
+    <footer class="footer"><p>Fourier series visualizer – custom ∑ aₙ·sin/cos(nx)</p></footer>
     <script src="js/main.js"></script>
-    <script>
-        document.getElementById('harmonics-custom').addEventListener('input', (e) => {
-            document.getElementById('harmonics-custom-value').innerText = e.target.value;
-        });
-        if (window.initFourierSim) window.initFourierSim();
-    </script>
+    <script>document.getElementById('harmonics').addEventListener('input', (e) => document.getElementById('harmonics-value').innerText = e.target.value);</script>
 </body>
 </html>
